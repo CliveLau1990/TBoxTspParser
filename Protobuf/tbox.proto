@@ -1,0 +1,749 @@
+﻿/* 	
+	东风小康_T-BOX_传统燃油车_(2.0协议)通用_2.2.2
+	author: guanning
+	content:
+	1 MsgAck通用消息增加对 结果码(code) 的描述字段
+	2 日志上传阶段 枚举定义 优化
+	3 远程诊断增加胎压报警枚举，平台不再以上报胎压值判断是否报警
+ */
+
+syntax = "proto3";
+
+//option java_outer_classname="TboxProtocal";
+
+// on/off状态
+enum OnOffState
+{
+	ONOFF_STATE_UNKNOWN = 0;
+	ONOFF_STATE_OFF = 1;
+	ONOFF_STATE_ON = 2;
+}
+
+//设备编号类型
+enum EnumDeviceIdType
+{
+	PDID = 0;
+	VIN =1;
+	IMEI =2;
+	ICCID =3;
+}
+
+//消息类型
+enum EnumMsgType
+{
+	TYPE0 = 0; 													//仅为填充值，无实际意义
+	TYPE1 = 1;  												//仅为填充值，无实际意义
+	ACK = 2;													//通用应答消息
+	REG_REQ = 3; 												//注册请求 
+	REG_RESP = 4; 												//注册回复 
+	LOGIN_REQ = 5;												//登录请求
+	LOGIN_RESP = 6;												//登录回复
+	HEARTBEAT_RESP = 7; 										//心跳
+	CONFIG_QUERY_RESP = 8;										//远程查询应答
+	CONFIG_REQ = 9;												//远程设置下发
+	CONFIG_RESP = 10;											//远程设置应答
+	CONTROL_CMD = 11;											//远程控制命令下发
+	CONTROL_RESP = 12; 											//远程控制结果应答
+	OTA_CMD_REQ = 13;											//OTA升级命令下发
+	OTA_CMD_RESP = 14;											//OTA升级命令应答	
+	OTA_CHECKSUM_REQ = 15;										//OTA文件校验请求
+	OTA_CHECKSUM_RESP = 16;										//OTA文件校验回复
+	OTA_RESULT_REPORT = 17;										//OTA升级结果上报
+	DIAGNOSIS_RESPONSE = 18;									//远程诊断结果应答
+	DATAMINING = 19;											//数据采集上报
+	VEHICLE_STATUS = 20;										//车辆状态上报
+	ALARM_REPORT = 21;											//报警信息上报
+	ALARM_RESP = 22;											//报警信息回复
+	PUSH_MESSAGE = 23;											//推送消息下发
+	MOTOR_FIRE_REPORT = 24;										//点火熄火上报
+	TRACKING_DATA_REPORT = 25;									//追踪数据上报
+	IBE_CALL_REPORT = 26;										//3CALL上报
+	LOG_UPLOAD_CMD = 27;										//日志上传命令下发
+	LOG_UPLOAD_RESP = 28;										//日志上传响应
+	LOG_UPLOAD_REQ = 29;										//日志上传请求
+	GATEWAY_RESP = 30;											//网关地址回复
+	HEART_BEAT_REQ = 101; 										//心跳
+	LOGOUT_REQ = 102;											//登出请求
+	CONFIG_QUERY_REQ = 103;										//远程查询下发
+	DIAGNOSIS_REQ = 104;										//远程诊断下发
+	VEHICLE_STATUS_REQ = 105;									//车辆状态下发
+	TRACKING_STOP_REPORT = 106;									//追踪模式主动断开上报
+	GATEWAY_REQ = 107;											//网关地址请求
+}
+
+
+//----------------------------------通用消息---------------------------------------------------------
+
+
+//应答消息
+message MsgAck
+{
+	bool 		status = 1; 									//结果 true:成功  false:失败
+	string 		code = 2; 										//结果码：双方通过码表翻译，未定义码表，可参考desc
+	string		desc = 3;										//结果码描述，仅供参考，不作为判断依据
+}
+
+//顶层消息
+message MsgTop
+{
+	MsgHead message_head = 1; 									//通用头，必填字段
+	MsgAck	ack = 2;											//通用回复消息
+	MsgRegReq register_request = 3;								//注册请求 
+	MsgRegResp register_response = 4;							//注册回复 
+	MsgLoginReq login_request = 5; 								//登录请求
+    MsgLoginResp login_response = 6;							//登录回复
+    MsgHeartBeatResp heart_beat_response = 7; 					//心跳
+	MsgConfQueryResp config_query_response = 8;					//远程查询应答
+	MsgConfReq  config_request = 9;								//远程设置下发
+	MsgConfResp config_response = 10;							//远程设置应答
+	MsgControlReq control_cmd = 11;								//远程控制命令下发
+	MsgControlResp control_response = 12; 						//远程控制结果应答
+	MsgOtaCmd ota_cmd = 13;										//OTA升级命令下发
+	MsgOtaCmdResponse ota_cmd_response = 14;					//OTA升级命令应答	
+ 	MsgOtaCmdCheckSumRequest ota_cmd_check_request = 15;		//OTA文件校验请求
+	MsgOtaCmdCheckSumResponse ota_cmd_check_response = 16;		//OTA文件校验回复
+	MsgOtaResult ota_result = 17;								//OTA升级结果上报
+	MsgDiagnosisResp diagnosis_response = 18;					//远程诊断结果应答
+	MsgDatamining datamining = 19;								//数据采集上报
+	MsgVehicleStatus vehicle_status = 20;						//车辆状态上报
+	MsgAlarmReport alarm_signal = 21;							//报警信息上报
+	MsgAlarmResp alarm_response = 22;							//报警信息回复
+	MsgPushMessage push_message = 23;							//推送消息下发
+	MsgMotorFireSignal motor_fire_signal = 24;					//点火熄火上报
+	MsgTrackingData	tracking_data = 25;							//追踪数据上报
+	MsgIBEcallReport call_report = 26;							//3CALL上报
+	MsgLogUploadCmd log_upload_cmd = 27;						//日志上传命令下发
+	MsgLogUploadResp log_upload_response = 28;					//日志上传响应
+	MsgLogUploadReq log_upload_request = 29;					//日志上传请求
+	MsgGatewayResp	gateway_response = 30;						//网关地址回复
+}
+
+//通用消息头，每个消息都需要包含消息头
+message MsgHead
+{
+	uint32 protocol_version = 1; 								//协议版本号 参考<网关协议版本号规范>
+	EnumDeviceIdType did_type = 2; 								//设备编号类型
+	string device_id = 3; 										//设备编号
+	uint32 message_id = 4; 										//消息编号 tbox顺序生成
+	EnumMsgType msg_type = 5; 									//消息类型
+	uint32 msg_c_time = 6; 										//消息生成时间(采集时间)，UTC时间，1970年1月1日以来秒数
+	string token = 7; 											//登录的TOKEN，每次登录成功后，tsp分配并回复一个token口令，后续所有消息的头部都需携带此token
+	bool   flag = 8; 											//补报标记，TRUE：补报 ,false: 正常消息
+	string task_id = 9;											//平台任务编号
+	//uint32 retry_message_id = 8; 								//非0值代表未收到反馈而重试发送消息的message_id, 值为0代表非重试发送消息
+}
+
+//GPS信息
+message MsgGpsInfo
+{
+	int32 longtitude = 1; 										//gps经度,  大于0代表东经，小于0代表西经, 单位：百万分之一度
+	int32 latitude = 2; 										//gps纬度， 大于0代表北纬，小于0代表南纬，单位：百万分之一度
+	int32 altitude = 3; 										//海拔高度，单位：米
+	int32 gps_heading = 4; 										//朝向，0度代表正北，顺时针角度
+	int32 gps_speed = 5; 										//gps速度，单位：公里/小时
+	int32 satellite_number = 6; 								//gps可视卫星数
+	bool  valid = 7; 											//gps是否有效
+	uint32 gps_time = 8;										//gps采集时间
+}
+
+//----------------------------------注册---------------------------------------------------------
+
+//注册请求消息 
+message MsgRegReq
+{
+	string pdid = 1; 											//tbox pdid
+	string iccid = 2; 											//tbox sim iccid
+	string tbox_version = 3; 									//tbox软件版本号，参考最新版本规则
+}
+
+//注册请求应答 
+message MsgRegResp
+{
+	MsgAck ack = 1;												//注册结果
+}
+
+//----------------------------------登陆---------------------------------------------------------
+
+//登录请求
+message MsgLoginReq
+{
+	string pdid = 1; 											//tbox pdid
+	string iccid = 2; 											//tbox sim iccid
+	string vin = 3; 											//汽车VIN码
+	string tbox_version = 4; 									//tbox软件版本号，参考最新版本规则
+	string release_tag = 5; 									//tbox 版本TAG, R代表正式版本，D+数字代表测试版本，例如D1
+}
+
+//登录回复
+message MsgLoginResp
+{
+	MsgAck ack = 1; 											
+	string token = 2; 											//登录分配TOKEN口令(注册网关全0)
+}
+
+//----------------------------------车型网关---------------------------------------------------------
+
+//网关地址回复
+message MsgGatewayResp
+{
+	MsgAck ack = 1;												//true 成功，地址可用  false 无地址或地址不可用
+	string url = 2;
+}
+
+
+//----------------------------------心跳---------------------------------------------------------
+
+//链路检测回复
+message MsgHeartBeatResp
+{
+	MsgAck ack = 1; 											//通用回复码
+}
+
+
+//----------------------------------参数配置---------------------------------------------------------
+
+
+//参数配置数据
+message MsgConfData
+{
+	string 	mqtt_server_addr = 1; 								// mqtt server IP地址+端口号
+	string 	mqtt_server_topic = 2; 								//tsp mqtt topic
+	string 	mqtt_key_business_server_addr = 3; 					//核心紧急业务mqtt server IP地址+端口号
+	string 	mqtt_key_business_server_topic = 4; 				//核心紧急业务tsp mqtt topic
+	string 	ecall_number = 5;									//E-call 号码
+	string 	bcall_number = 6; 									//B-call 号码
+	string 	icall_number = 7; 									//l-call 号码
+	bool   	ecall_enable = 8; 									//E-call 使能
+	bool	bcall_enable = 9; 									//B-call 使能
+	bool	icall_enable = 10; 									//l-call 使能
+	string  sms_gate_number_upload = 11; 						//上行短消息网关
+	string  sms_gate_number_download= 12; 						//下行短消息网关
+	uint32 	datamining_upload_frequency = 13; 					//datamining上传频率
+	uint32  vehicle_status_upload_frequency = 14; 				//车身状态上报频率
+	bool    ignition_blowout_upload_enable = 15; 				//点火熄火上传状态使能
+	bool 	upload_alert_enable = 16; 							//上报告警信息使能
+	bool	datamining_enable = 17; 							//datamining 使能
+	bool	svt_enable = 18; 									//追踪功能使能
+	bool	eletronic_defense_enable = 19; 						//电子围栏功能使能
+	uint32  abnormal_move_threshold_value = 20;					//异动拖车G-SERNOR触发阈值,单位：0.5G, 取值范围（1-32）
+	uint32	tracking_data_frequency	= 21;						//远程追踪上报频率	5s
+}
+
+
+
+//参数配置项
+enum EnumConfItem
+{
+	MQTT_SERVER_ADDR = 0; 										//mqtt server IP地址+端口号
+	MQTT_SERVER_TOPIC = 1; 										//tsp mqtt topic
+	MQTT_KEY_BUSINESS_SERVER_ADDR = 2; 							//核心紧急业务mqtt server IP地址，端口号
+	MQTT_KEY_BUSINESS_SERVER_TOPIC = 3; 						//核心紧急业务tsp mqtt topic
+	ECALL_NUMBER = 4; 											//E-call 号码
+	BCALL_NUMBER = 5; 											//B-call 号码
+	ICALL_NUMBER = 6; 											//l-call 号码
+	ECALL_ENABLE = 7; 											//E-call 使能
+	BCALL_ENABLE = 8; 											//B-call 使能
+	ICALL_ENABLE = 9; 											//l-call 使能
+	SMS_GATE_NUMBER_UPLOAD = 10; 								//上行短消息网关
+	SMS_GATE_NUMBER_DOWNLOAD = 11; 								//下行短消息网关
+	DATAMINING_UPLOAD_FREQUENCY = 12; 							//datamining上传频率
+	VEHICLE_STATUS_UPLOAD_FREQUENCY = 13; 						//车身状态上报频率
+	IGNITION_BLOWOUT_UPLOAD_ENABLE = 14; 						//点火熄火上传状态使能
+	UPLOAD_ALERT_ENABLE = 15; 									//上报告警信息使能
+	DATAMING_ENABLE = 16; 										//datamining 使能
+	SVT_ENABLE = 17;											//追踪功能使能
+	ELETRONIC_DEFENSE_ENABLE = 18; 								//电子围栏功能使能
+	ABNORMAL_MOVE_THRESHOLD_VALUE = 19; 						//异动拖车G-SERNOR触发阈值
+	TRACKING_DATA_FREQUENCY = 20;								//远程追踪上报频率
+}
+
+
+//远程查询请求（无消息体）
+//远程查询响应 
+message MsgConfQueryResp
+{
+	MsgAck ack = 1; 									
+	MsgConfData qconfig_data = 2; 								//配置数据
+}
+
+
+//远程设置请求
+message MsgConfReq
+{
+	repeated EnumConfItem  config_items = 1; 					//配置项
+	MsgConfData rconfig_data = 2; 								//配置数据
+}
+
+//远程设置回复
+message MsgConfResp
+{
+	//远程设置结果单元结构
+	message MsgConfResult
+	{
+		EnumConfItem config_item = 1; 							//配置项
+		bool result = 2; 										//true 配置成功  false 配置失败
+	}
+	MsgAck ack = 1; 											
+	repeated MsgConfResult config_results = 2;					//配置执行结果
+	MsgConfData config_old = 3; 								//配置执行前配置值
+	MsgConfData config_new = 4; 								//配置执行后配置值
+}
+
+//----------------------------------远程控制---------------------------------------------------------
+
+//远程控制命令类型
+enum EnumCmdType
+{
+	ENGINE = 0; 												//发动机
+	AIR_CONDITION_CTRL = 1; 									//空调控制
+	LOCK = 2; 													//中控锁
+	FIND_VEHICLE = 3; 											//寻车指令
+	WINDOWS = 4;												//车窗
+	SEAT	= 5;												//座椅
+	TRACK	= 6;												//远程追踪
+}
+
+//车窗类型
+enum EnumWindowType
+{
+	WINDOW = 0;													//车窗
+	ROOF = 1;													//天窗
+}
+enum EnumWindowParam
+{
+	WUNKNOW = 0 ;												//无效
+	WSTOP = 1;													//停止（预留）
+	RISE = 2;													//升窗
+	FALL = 3;													//降窗
+}
+enum EnumRoofParam
+{
+	RUNKNOW = 0 ;												//无效
+	OPEN = 1 ;													//开窗
+	CLOSE = 2 ;													//关窗
+	RSTOP = 3;													//停止
+	UP = 4;														//翘起
+}
+
+//座椅加热参数
+enum EnumSeatLevel
+{
+	SCLOSE = 0 ;												//关闭
+	LEVEL1 = 1;													//一级
+	LEVEL2 = 2;													//二级
+	LEVEL3 = 3;													//三级
+	LEVEL_INVALID = 4;   										//无效
+}
+
+//远程控制命令请求
+message MsgControlReq
+{
+	//空调控制参数
+	message MsgAirParam
+	{
+		bool 	ac_switch = 1; 									//开关空调    true:开启, false:关闭
+		float	ac_temperature = 2;  							//空调温度，精度0.5
+		bool 	ac_front_defrost = 3; 							//开关前除霜  true:开启, false:关闭
+		bool 	ac_rear_defrost = 4; 							//开关后除霜  true:开启, false:关闭
+	}
+	//车窗控制参数
+	message MsgWindowsParam
+	{
+		EnumWindowType type = 1;					
+		EnumWindowParam  windw_param = 2;
+		EnumRoofParam roof_param = 3;
+	}
+	//座椅控制参数
+	message MsgSeatParam
+	{				
+		EnumSeatLevel  master = 1;
+		EnumSeatLevel  slave = 2;
+	}
+	
+	EnumCmdType cmd_type = 1;									//远程控制命令类型
+	MsgAirParam air_param = 2;									//空调控制参数
+	bool engine_param = 3;										//发动机控制参数  true:开启发动机, false:关闭发动机
+	bool lock_param = 4;										//中控锁控制参数  true:开启中控锁, false:关闭中控锁
+	MsgWindowsParam window_param = 5;							//车窗天窗控制参数
+	MsgSeatParam seat_param = 6;								//座椅加热参数
+	bool	track_signal = 7;									//追踪开关	true:开启追踪  false:关闭追踪
+}
+
+//远程控制响应
+message MsgControlResp
+{
+	MsgAck ack = 1; 											
+	MsgVehicleStatus vehicle_status = 2;						//车辆状态信息
+}
+
+//----------------------------------OTA---------------------------------------------------------
+
+//OTA升级命令(TSP->TBOX)1
+message MsgOtaCmd
+{
+	string update_target_version = 1;							//升级目标版本
+	string upgrade_file_download_addr = 2;
+	string ota_task_id = 3; 									 
+}
+
+//OTA升级命令回复(TBOX->TSP)2
+message MsgOtaCmdResponse
+{
+	MsgAck ack = 1; 											//通用回复码
+	string ota_task_id = 2; 									 
+}
+
+//ota升级文件checksum检查请求(TBOX->TSP)3
+message MsgOtaCmdCheckSumRequest
+{
+	string check_sum_code = 1;
+	string upgrade_file_download_addr = 2;
+	string ota_task_id = 3; 									 
+}
+
+//OTA升级后台检查升级文件应答(TSP->TBOX)4
+message MsgOtaCmdCheckSumResponse
+{
+	MsgAck ack = 1; 											//通用回复码
+	bool check_sum_result = 2; 									//检查结果，true：checksum匹配，false：不匹配
+	string ota_task_id = 3; 									 
+}
+
+//OTA升级命令执行结果码
+enum OtaCmdResultCode
+{
+	UPGRADE_FAILED = 0;											//升级失败
+	UPGRADE_SUCCESSED = 1; 										//升级成功
+	DOWNLOAD_FILE_FAILED = 2; 									//文件下载失败
+	OTA_IN_PROCESS = 3;											//当前升级任务进行中
+}
+
+//OTA升级结果(TBOX->TSP)5
+message MsgOtaResult
+{
+	string before_upgrade_version = 1;							//升级前版本
+	string after_upgread_version = 2; 							//升级后版本
+	OtaCmdResultCode result = 3;  								//升级结果
+	uint32 upgrade_time = 4; 									//升级时间
+	string ota_task_id = 5;  									 
+}
+
+
+
+//----------------------------------远程诊断---------------------------------------------------------
+enum EnumPressWarn
+{
+	PRESSWARN_NONE              = 0;							//无
+	PRESSWARN_HIGH              = 1;							//胎压高
+	PRESSWARN_LOW               = 2;							//胎压低
+	PRESSWARN_FLAT              = 3;							//快速漏气
+	PRESSWARN_SENSOR_TRACKFAULT = 4; 							//传感器丢失
+	PRESSWARN_SENSOR_BATTLOW    = 5; 							//传感器电量低
+	PRESSWARN_SENSOR_FAULT      = 6; 							//传感器故障
+	PRESSWARN_UNKNOWN           = 7;							
+}
+message DiagnosisResult
+{
+	int32 ecu_id = 1;											// ecu id
+	bytes dtcs = 2; 											// DTC码 4字节一组 每组前三字节为DTC码， 最后一个字节为状态掩码
+}
+	
+//诊断响应
+message MsgDiagnosisResp
+{
+	MsgAck	ack = 1;
+	repeated DiagnosisResult diagnosis_result = 2; 				//DTC码
+	
+	float lf_tire_pressure = 3; 								//左前胎压		KPa
+	float lr_tire_pressure = 4; 								//左后胎压		KPa
+	float rf_tire_pressure = 5; 								//右前胎压		KPa
+	float rr_tire_pressure = 6; 								//右后胎压		KPa
+	float battery_voltage = 7;									//蓄电池电压（如11.12）V
+	EnumPressWarn lf_press_warn = 8;							//左前胎压报警
+	EnumPressWarn lr_press_warn = 9;							//左后胎压报警
+	EnumPressWarn rf_press_warn = 10;							//右前胎压报警
+	EnumPressWarn rr_press_warn = 11;							//右后胎压报警
+}
+
+//----------------------------------暂未使用(未定义)---------------------------------------------------------
+
+//数据挖掘(采集)
+message MsgDatamining
+{
+	
+}
+
+
+
+//----------------------------------车辆状态上报---------------------------------------------------------
+//PEPS电源模式
+enum PepsPowerMode
+{
+	PEPS_DEFAULT = 0;
+	PEPS_OFF = 1;
+	PEPS_ACC = 2;
+	PEPS_ON = 3;
+	PEPS_START = 4;
+	PEPS_INVALID = 5;
+}
+
+//引擎状态
+enum EnumEngineState
+{
+	ENGINESTATE_UNKNOWN = 0;
+	KEYOFF = 1;
+	KEYON = 2;
+	CRANK = 3;
+	RUNNING = 4;
+}
+
+
+
+//变速箱档位
+enum GearPosition
+{
+	GEAR_P = 0;
+	GEAR_R = 1;
+	GEAR_N = 2;
+	GEAR_D = 3;
+	GEAR_MANUAL_1 = 4;
+	GEAR_MANUAL_2 = 5;
+	GEAR_MANUAL_3 = 6;
+	GEAR_MANUAL_4 = 7;
+	GEAR_MANUAL_5 = 8;
+	GEAR_MANUAL_6 = 9;
+	GEAR_MANUAL_7 = 10;
+	GEAR_MANUAL_8 = 11;
+	GEAR_S = 12;
+	GEAR_UNKNOW = 13;
+	GEAR_Z1 = 14;
+	GEAR_Z2 = 15;
+	GEAR_Z3 = 16;
+	GEAR_Invalid = 17;
+}
+
+//车辆状态上报
+message MsgVehicleStatus
+{
+	//加减速g值
+	message MsgGValue
+	{
+		float gvalue = 1;
+		float current_speed = 2; 								//当前速度, unit: km/h
+		int32 engine_speed = 3; 								//当前转速, unit: rpm
+		uint32 gvalue_time = 4; 								//获取g值时间
+		MsgGpsInfo gps_info = 5;
+		bool 	gvalue_valid = 6;													
+	}
+	
+	OnOffState lf_door_status = 1;								//左前门开关状态
+	OnOffState lr_door_status = 2;								//左后门开关状态
+	OnOffState rf_door_status = 3;								//右前门开关状态
+	OnOffState rr_door_status = 4;								//右后门开关状态
+	OnOffState trunk_door_status = 5;							//后备箱开关状态
+	OnOffState lf_window_status = 6; 							//左前窗开关状态
+	OnOffState lr_window_status = 7; 							//左后窗开关状态
+	OnOffState rf_window_status = 8; 							//右前窗开关状态
+	OnOffState rr_window_status = 9; 							//右后窗开关状态
+	OnOffState roof_window_status = 10;  						//天窗开关状态
+	OnOffState air_condition_status = 11;  						//空调开关状态
+	OnOffState air_condition_defrost_status = 12; 				//空调前除霜开关状态
+	OnOffState air_condition_rear_defrost_status = 13; 			//空调后除霜开关状态
+	float	   air_condition_temperature = 14;  				//空调温度
+	OnOffState lock_status = 15;  								//驾驶员左前门锁开关状态
+	EnumEngineState engine_status = 16;  						//发动机状态
+	OnOffState wiper_Status = 17;  								//雨刷开关状态
+	OnOffState hand_break_status = 18;  						//手刹状态
+	OnOffState defrost_mode = 19; 								//前除霜状态(未使用)		
+	PepsPowerMode peps_power_mode = 20;  						//PEPS电源状态
+	GearPosition gear_position = 21;  							//档位	
+	float lf_tire_pressure = 22; 								//左前胎压		KPa
+	float lr_tire_pressure = 23; 								//左后胎压		KPa
+	float rf_tire_pressure = 24; 								//右前胎压		KPa
+	float rr_tire_pressure = 25; 								//右后胎压		KPa
+	float battery_voltage = 26;									//蓄电池电压（如11.12）V(暂未实现)
+	uint32 fuel_level = 27;  									//剩余油量, unit: %
+	float remain_mileage = 28; 									//剩余里程, unit: km, invalid: -1
+	OnOffState belt = 29;										//是否系安全带 on 系  off 未系
+	OnOffState front_light = 30;								//近光灯状态
+	OnOffState hight_light = 31;								//远光灯状态 
+	repeated MsgGValue g_value = 32;							//g值(暂未实现)
+	uint32 light_intensity = 33;								//光照强度:范围1-1024，单位是w/m2 （瓦每平米）
+	float current_fuel_consumption = 34;  						//瞬时油耗  L/百公里(未使用)
+	float current_speed = 35;  									//当前速度, unit: km/h
+	int32 engine_speed = 36;  									//当前转速, unit: rpm
+	float steering_angle = 37;  								//方向盘转角，左为正，右为负，unit: 度吧
+	float accelerator_pedal_angle = 38;  						//油门脚踏板角度
+	float brake_pedal_angle = 39;								//刹车板角度(未使用)
+	float clutch_pedal_angle = 40;  							//离合器角度(未使用)
+	float total_mileage = 41;  									//总里程, unit: km, invalid: -1
+	MsgGpsInfo	gps_info = 42;									//车辆位置	
+	OnOffState	track_status = 43;								//当前追踪状态	
+	float average_fuel_consumption = 44;						//平均油耗
+	OnOffState engine_hood_status = 45; 						//引擎盖开关状态
+}
+
+//----------------------------------报警上报---------------------------------------------------------
+
+//碰撞类型
+enum EnumCrashInfo
+{
+	NONE_CRASH = 0;
+	UNKNOWN_CRASH = 1;
+	HEAD_CRASH = 2;
+	LEFT_SIDE_CRASH = 3;
+	RIGHT_SIDE_CRASH = 4;
+	TAIL_CRASH = 5;
+	PEDESTRIAN = 6;
+	MUTI_CRASH = 7;
+}
+
+//报警类型
+enum EnumAlarmType
+{
+	AIR_BAG = 0;												//气囊爆开
+	SIDE_TURN = 1;												//车辆侧翻
+	UNUSUAL_MOVE = 2;											//异动
+	ANTI_THEFT = 3;												//防盗报警
+	VEHICLE_CRASH = 4;											//碰撞
+	WINDOW_ABNORMAL = 5;										//车窗，天窗未关
+}
+
+
+//报警上报
+message MsgAlarmReport
+{
+	//g-sensor 值
+	message MsgGSensor
+	{
+		int32 x = 1; 											//x轴G值 单位mG
+		int32 y = 2; 											//y轴G值 单位mG
+		int32 z = 3; 											//z轴G值 单位mG
+	}
+
+	message MsgCarInfo
+	{
+		OnOffState	roof_window = 1;							//天窗
+		OnOffState	lf_window = 2;								//左前车窗		COMMON_TRUE：未关
+		OnOffState	lr_window = 3;								//左后车窗
+		OnOffState	rf_window = 4;								//右前车窗
+		OnOffState	rr_window = 5;								//右后车窗
+		OnOffState lf_door_status = 6;							//左前门开关状态
+		OnOffState lr_door_status = 7;							//左后门开关状态
+		OnOffState rf_door_status = 8;							//右前门开关状态
+		OnOffState rr_door_status = 9;							//右后门开关状态
+	}
+	
+	EnumAlarmType alarm_type = 1; 								//信号类型（必填）
+	MsgGpsInfo gps_info = 2; 									//GPS位置（必填）
+	OnOffState side_turn_flag = 3; 								//是否侧翻标识.  			1：未侧翻， 2：侧翻,  0: 未知
+	OnOffState air_bag_exploded = 4; 							//安全气囊是否爆开. 		1：未爆开， 2：爆开， 0：未知
+	OnOffState unusual_move_flag = 5; 							//是否有异动  				1：无异动， 2：有异动， 0：未知
+	OnOffState anti_theft_alarm_flag = 6; 						//是否有防盗报警信号  		1：无防盗报警， 2：有防盗报警， 0：未知
+	EnumCrashInfo crash_info = 7; 								//碰撞信息
+	MsgGSensor g_sensor_value = 8; 								//g-sensor 数值
+	MsgCarInfo car_info = 9;									//车身部分数据(车窗，四车门，胎压)
+	
+	
+	EnumEngineState engine_status = 10;  						//发动机状态
+	OnOffState brake_pedal_status = 11;							//刹车板状态				2 刹车 1 未刹车
+	float current_speed = 12;  									//当前速度, unit: km/h
+}
+
+//报警上报回复
+message MsgAlarmResp
+{
+	MsgAck	ack = 1;
+}
+
+//----------------------------------点火熄火---------------------------------------------------------
+
+//点火熄火状态
+enum EnumMotorFireMode
+{
+	IGNITION = 0;
+	FLAMEOUT = 1;
+}
+
+
+//点火熄火信号
+message MsgMotorFireSignal
+{
+	EnumMotorFireMode mode = 1; 								//点火熄火标志
+	float total_mileage = 2; 									//当前总里程
+	MsgGpsInfo gps_info = 3; 									//GPS位置
+	uint32 moter_fire_no = 4; 									//点火熄火编号 从0开始编号，到0xFFFFFFFF后再从0开始
+}
+
+//----------------------------------远程追踪---------------------------------------------------------
+
+//远程追踪上报数据
+message MsgTrackingData
+{
+	MsgGpsInfo gps = 1;				
+}
+
+
+//----------------------------------消息推送---------------------------------------------------------
+
+//推送消息类型
+enum EnumPushType
+{
+	MSGTYPE_UNKNOWN = 0;
+}
+
+//推送消息
+message MsgPushMessage
+{
+	EnumPushType msg_type = 1; 									//消息类型
+	string title = 2;											//标题
+	string content = 3; 										//内容
+}
+
+//----------------------------------3call---------------------------------------------------------
+
+//call type
+enum EnumCallType
+{
+	ICALL = 0;
+	BCALL = 1;
+	ECALL = 2;
+}
+
+message MsgIBEcallReport
+{
+	EnumCallType calltype = 1;									
+	MsgGpsInfo gps = 2;											//GPS位置
+}
+
+//----------------------------------TBOX日志上传---------------------------------------------------------
+
+//日志上传阶段
+enum EnumLogUploadStatus
+{
+	CMD_RESP = 0;												//收到上传指令
+	UPLOAD = 1;													//上传文件阶段
+	RESULT = 2;													//上报结果阶段
+}
+
+//日志上传请求
+message MsgLogUploadReq
+{
+	repeated string module_name = 1;							//请求上传模块
+}
+
+//日志上传命令下发
+message MsgLogUploadCmd
+{
+	repeated string model_name = 1;								//日志模块名称
+	string file_path = 2;										//日志上传路径
+}
+
+//日志上传响应
+message MsgLogUploadResp
+{
+	EnumLogUploadStatus status = 1;								//阶段
+	MsgAck	ack = 2;											
+	string file_name = 3;										//上传的文件名
+}
+
