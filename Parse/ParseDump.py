@@ -437,8 +437,8 @@ class ParseDump(object):
     @staticmethod
     def __show_seat_parameter(seat_param):
         msg = "{" \
-              + "master:" + ParseDump.__enum_seat_level(seat_param.master) \
-              + ", slave:" + ParseDump.__enum_seat_level(seat_param.slave) \
+              + "main:" + ParseDump.__enum_seat_level(seat_param.main) \
+              + ", subordinate:" + ParseDump.__enum_seat_level(seat_param.subordinate) \
               + "}"
         return msg
 
